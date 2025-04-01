@@ -1,111 +1,111 @@
-from abc import ABC, abstractmethod
-import numpy as np
-import matplotlib.pyplot as plt
+from abc import ABC, abstractmethod  # Importa clases para crear clases abstractas
+import numpy as np                   # Importa NumPy para cálculos matemáticos y vectoriales
+import matplotlib.pyplot as plt      # Importa Matplotlib para visualización gráfica
 
 
-# Clase para cuerpos celestes
+# Clase para cuerpos celestes - Clase base abstracta para todos los cuerpos celestes
 class CuerpoCeleste(ABC):
-    def __init__(self, nombre, masa, radio=1, x=0, y=0, z=0, vx=0, vy=0, vz=0):
-        self._nombre = nombre
-        self._masa = masa
-        self._radio = radio  
-        self._x = x
-        self._y = y
-        self._z = z
-        self._vx = vx
-        self._vy = vy
-        self._vz = vz
-        self._historial_posiciones = []
-        self._ax = 0  # Aceleraciones para Verlet
-        self._ay = 0
-        self._az = 0
+    def __init__(self, nombre, masa, radio=1, x=0, y=0, z=0, vx=0, vy=0, vz=0):  # Constructor con valores predeterminados
+        self._nombre = nombre        # Nombre del cuerpo celeste
+        self._masa = masa            # Masa del cuerpo celeste
+        self._radio = radio          # Radio físico del cuerpo
+        self._x = x                  # Posición x inicial
+        self._y = y                  # Posición y inicial
+        self._z = z                  # Posición z inicial
+        self._vx = vx                # Velocidad en dirección x inicial
+        self._vy = vy                # Velocidad en dirección y inicial
+        self._vz = vz                # Velocidad en dirección z inicial
+        self._historial_posiciones = []  # Lista para almacenar el historial de posiciones
+        self._ax = 0                 # Aceleración en dirección x (para el algoritmo Verlet)
+        self._ay = 0                 # Aceleración en dirección y (para el algoritmo Verlet)
+        self._az = 0                 # Aceleración en dirección z (para el algoritmo Verlet)
 
     @property
-    def nombre(self):
+    def nombre(self):                # Getter para el nombre
         return self._nombre
     
     @property
-    def masa(self):
+    def masa(self):                  # Getter para la masa
         return self._masa
     
     @property
-    def radio(self):
+    def radio(self):                 # Getter para el radio
         return self._radio
     
     @property
-    def posicion(self):
+    def posicion(self):              # Getter que devuelve posición como vector 
         return np.array([self._x, self._y, self._z])
     
     @property
-    def velocidad(self):
+    def velocidad(self):             # Getter que devuelve velocidad como vector 
         return np.array([self._vx, self._vy, self._vz])
     
     @property
-    def historial_posiciones(self):
+    def historial_posiciones(self):  # Getter para acceder al historial de posiciones
         return self._historial_posiciones
     
-    def agregar_posicion_historial(self):
+    def agregar_posicion_historial(self):  # Método para guardar la posición actual en el historial
         self._historial_posiciones.append(self.posicion.copy())
     
     @abstractmethod
-    def actualizar_posicion(self, dt, vector_traslacion=None):
+    def actualizar_posicion(self, dt, vector_traslacion=None):  # Método abstracto que deben implementar las subclases
         pass
 
-# Clase para planetas
+# Clase para planetas - Hereda de CuerpoCeleste
 class Planeta(CuerpoCeleste):
-    def actualizar_posicion(self, dt, vector_traslacion=None):
+    def actualizar_posicion(self, dt, vector_traslacion=None):  # Implementación del método abstracto
         # Guardar posición anterior
-        x_prev, y_prev, z_prev = self._x, self._y, self._z
+        x_prev, y_prev, z_prev = self._x, self._y, self._z  # Guarda posición previa para cálculos
         
-        # Actualizar posición con Verlet
-        self._x += self._vx * dt + 0.5 * self._ax * dt**2
-        self._y += self._vy * dt + 0.5 * self._ay * dt**2
-        self._z += self._vz * dt + 0.5 * self._az * dt**2
+        # Actualizar posición con Verlet (algoritmo de integración numérica de segundo orden)
+        self._x += self._vx * dt + 0.5 * self._ax * dt**2  # Actualiza posición x usando integración Verlet
+        self._y += self._vy * dt + 0.5 * self._ay * dt**2  # Actualiza posición y usando integración Verlet
+        self._z += self._vz * dt + 0.5 * self._az * dt**2  # Actualiza posición z usando integración Verlet
         
         # Aplicar vector de traslación global si existe
-        if vector_traslacion is not None:
-            self._x += vector_traslacion[0] * dt
-            self._y += vector_traslacion[1] * dt
-            self._z += vector_traslacion[2] * dt
+        if vector_traslacion is not None:  # Comprueba si hay vector de traslación
+            self._x += vector_traslacion[0] * dt  # Aplica traslación en x
+            self._y += vector_traslacion[1] * dt  # Aplica traslación en y
+            self._z += vector_traslacion[2] * dt  # Aplica traslación en z
         
         # Guardar aceleración anterior
-        ax_prev, ay_prev, az_prev = self._ax, self._ay, self._az
+        ax_prev, ay_prev, az_prev = self._ax, self._ay, self._az  # Guarda aceleración previa para cálculos Verlet
         
         # Actualizar velocidad con Verlet
-        self._vx += 0.5 * (ax_prev + self._ax) * dt
-        self._vy += 0.5 * (ay_prev + self._ay) * dt
-        self._vz += 0.5 * (az_prev + self._az) * dt
+        self._vx += 0.5 * (ax_prev + self._ax) * dt  # Actualiza velocidad x usando el promedio de aceleración
+        self._vy += 0.5 * (ay_prev + self._ay) * dt  # Actualiza velocidad y usando el promedio de aceleración
+        self._vz += 0.5 * (az_prev + self._az) * dt  # Actualiza velocidad z usando el promedio de aceleración
         
-        self.agregar_posicion_historial()
+        self.agregar_posicion_historial()  # Agrega la nueva posición al historial
 
-# Clase para estrellas
+# Clase para estrellas - Hereda de CuerpoCeleste
 class Estrella(CuerpoCeleste):
-    def actualizar_posicion(self, dt, vector_traslacion=None):
+    def actualizar_posicion(self, dt, vector_traslacion=None):  # Implementación para estrellas (solo traslación)
         # Aplicar vector de traslación global si existe
-        if vector_traslacion is not None:
-            self._x += vector_traslacion[0] * dt
-            self._y += vector_traslacion[1] * dt
-            self._z += vector_traslacion[2] * dt
+        if vector_traslacion is not None:  # Comprueba si hay vector de traslación
+            self._x += vector_traslacion[0] * dt  # Aplica traslación en x
+            self._y += vector_traslacion[1] * dt  # Aplica traslación en y
+            self._z += vector_traslacion[2] * dt  # Aplica traslación en z
             
-        self.agregar_posicion_historial()
+        self.agregar_posicion_historial()  # Agrega la nueva posición al historial
 
-# Constante gravitacional
-G = 6.67430e-11
 
-def calcular_fuerza(c1, c2):
-    r = c2.posicion - c1.posicion
-    distancia = np.linalg.norm(r)
+G = 6.67430e-11  # Constante universal de gravitación en m³/(kg·s²)
+
+def calcular_fuerza(c1, c2):  # Función para calcular la fuerza gravitacional entre dos cuerpos
+    r = c2.posicion - c1.posicion  # Vector distancia entre los dos cuerpos
+    distancia = np.linalg.norm(r)  # Magnitud de la distancia (norma euclidiana)
     
-    if distancia == 0:
-        return np.zeros(3)
+    if distancia == 0:  # Evita división por cero
+        return np.zeros(3)  # Devuelve vector de fuerza cero
     
     # Calcular fuerza gravitacional: F = G * m1 * m2 / r^2
-    fuerza_magnitud = G * c1.masa * c2.masa / (distancia**2)
-    fuerza_vector = fuerza_magnitud * r / distancia
+    fuerza_magnitud = G * c1.masa * c2.masa / (distancia**2)  # Magnitud de la fuerza según ley de gravitación
+    fuerza_vector = fuerza_magnitud * r / distancia  # Vector fuerza (dirección del cuerpo 2 al 1)
     
-    return fuerza_vector
+    return fuerza_vector  # Devuelve el vector de fuerza gravitacional
 
-def simular_sistema(cuerpos, dt, pasos, vector_traslacion=None):
+def simular_sistema(cuerpos, dt, pasos, vector_traslacion=None):  # Función principal para simular el sistema
     """
     Simula el sistema con un vector de traslación opcional
     
@@ -116,39 +116,39 @@ def simular_sistema(cuerpos, dt, pasos, vector_traslacion=None):
         vector_traslacion: Vector [vx, vy, vz] de velocidad global del sistema
     """
     # Inicializar historial de posiciones
-    for cuerpo in cuerpos:
-        cuerpo.agregar_posicion_historial()
+    for cuerpo in cuerpos:  # Recorre todos los cuerpos
+        cuerpo.agregar_posicion_historial()  # Agrega posición inicial al historial
     
     # Paso inicial: calcular aceleraciones iniciales para todos los cuerpos
-    for cuerpo in cuerpos:
-        fuerza_total = np.zeros(3)
-        for otro in cuerpos:
-            if otro != cuerpo:
-                fuerza_total += calcular_fuerza(cuerpo, otro)
+    for cuerpo in cuerpos:  # Recorre todos los cuerpos
+        fuerza_total = np.zeros(3)  # Inicializa vector de fuerza total
+        for otro in cuerpos:  # Recorre todos los otros cuerpos
+            if otro != cuerpo:  # Evita calcular fuerza con el mismo cuerpo
+                fuerza_total += calcular_fuerza(cuerpo, otro)  # Suma la fuerza ejercida por el otro cuerpo
         
         # Calcular aceleración según la ley de Newton: a = F/m
-        cuerpo._ax = fuerza_total[0] / cuerpo.masa
-        cuerpo._ay = fuerza_total[1] / cuerpo.masa
-        cuerpo._az = fuerza_total[2] / cuerpo.masa
+        cuerpo._ax = fuerza_total[0] / cuerpo.masa  # Calcula componente x de aceleración
+        cuerpo._ay = fuerza_total[1] / cuerpo.masa  # Calcula componente y de aceleración
+        cuerpo._az = fuerza_total[2] / cuerpo.masa  # Calcula componente z de aceleración
     
-    for _ in range(pasos):
+    for _ in range(pasos):  # Bucle principal de simulación
         # Actualizar posiciones
-        for cuerpo in cuerpos:
-            cuerpo.actualizar_posicion(dt, vector_traslacion)
+        for cuerpo in cuerpos:  # Recorre todos los cuerpos
+            cuerpo.actualizar_posicion(dt, vector_traslacion)  # Actualiza posición de cada cuerpo
         
         # Calcular nuevas aceleraciones para todos los cuerpos
-        for cuerpo in cuerpos:
-            fuerza_total = np.zeros(3)
-            for otro in cuerpos:
-                if otro != cuerpo:
-                    fuerza_total += calcular_fuerza(cuerpo, otro)
+        for cuerpo in cuerpos:  # Recorre todos los cuerpos
+            fuerza_total = np.zeros(3)  # vector de fuerza total
+            for otro in cuerpos:  # Recorre todos los otros cuerpos
+                if otro != cuerpo:  # Evita calcular fuerza con el mismo cuerpo
+                    fuerza_total += calcular_fuerza(cuerpo, otro)  # Suma la fuerza ejercida por el otro cuerpo
             
             # Calcular aceleración según la ley de Newton: a = F/m
-            cuerpo._ax = fuerza_total[0] / cuerpo.masa
-            cuerpo._ay = fuerza_total[1] / cuerpo.masa
-            cuerpo._az = fuerza_total[2] / cuerpo.masa
+            cuerpo._ax = fuerza_total[0] / cuerpo.masa  # Actualiza componente x de aceleración
+            cuerpo._ay = fuerza_total[1] / cuerpo.masa  # Actualiza componente y de aceleración
+            cuerpo._az = fuerza_total[2] / cuerpo.masa  # Actualiza componente z de aceleración
 
-def visualizar_sistema_3d(cuerpos, pasos_animacion=None):
+def visualizar_sistema_3d(cuerpos, pasos_animacion=None):  # Función para visualizar la simulación en 3D
     """
     Visualiza el sistema en 3D con rotación interactiva
     
@@ -157,151 +157,151 @@ def visualizar_sistema_3d(cuerpos, pasos_animacion=None):
         pasos_animacion: Número de pasos de animación
     """
     # Configurar figura con interactividad
-    plt.ion()  # Activar modo interactivo
-    fig = plt.figure(figsize=(12, 10))
-    ax = fig.add_subplot(111, projection='3d')
+    plt.ion()  # Activar modo interactivo para manipulación en tiempo real
+    fig = plt.figure(figsize=(12, 10))  # Crear figura con tamaño específico
+    ax = fig.add_subplot(111, projection='3d')  # Agregar subplot 3D
     
     # Configurar aspecto 3D para mantener escala igual en todos los ejes
-    ax.set_box_aspect([1, 1, 1])
+    ax.set_box_aspect([1, 1, 1])  # Establece relación de aspecto igual en todos los ejes
     
-    ax.set_xlabel('X (m)')
-    ax.set_ylabel('Y (m)')
-    ax.set_zlabel('Z (m)')
-    ax.set_title('Simulación de Órbitas en 3D Interactiva')
+    ax.set_xlabel('X (m)')  # Etiqueta para eje X
+    ax.set_ylabel('Y (m)')  # Etiqueta para eje Y
+    ax.set_zlabel('Z (m)')  # Etiqueta para eje Z
+    ax.set_title('Simulación de Órbitas en 3D Interactiva')  # Título de la figura
     
     # Elementos de visualización con esferas 3D
-    elementos = {}
-    for i, cuerpo in enumerate(cuerpos):
+    elementos = {}  # Diccionario para almacenar elementos de visualización
+    for i, cuerpo in enumerate(cuerpos):  # Recorre todos los cuerpos
         # Asignar colores específicos por nombre
-        if isinstance(cuerpo, Estrella):
-            color = 'gold'
-            radio_vis = np.log10(cuerpo.masa) * 0.1
-        elif cuerpo.nombre == "Tierra":
-            color = 'blue'
-            radio_vis = 0.5  # Radio visual relativo
-        elif cuerpo.nombre == "Marte":
-            color = 'red'
-            radio_vis = 0.3  # Radio visual relativo
-        else:
-            color = plt.cm.tab10(i % 10)
-            radio_vis = 1.0
+        if isinstance(cuerpo, Estrella):  # Si es una estrella
+            color = 'gold'  # Color dorado para estrellas
+            radio_vis = np.log10(cuerpo.masa) * 0.1  # Radio visual basado en logaritmo de la masa
+        elif cuerpo.nombre == "Tierra":  # Si es la Tierra
+            color = 'blue'  # Color azul para la Tierra
+            radio_vis = 0.5  # Radio visual relativo para la Tierra
+        elif cuerpo.nombre == "Marte":  # Si es Marte
+            color = 'red'  # Color rojo para Marte
+            radio_vis = 0.3  # Radio visual relativo para Marte
+        else:  # Para otros cuerpos
+            color = plt.cm.tab10(i % 10)  # Color de la paleta tab10
+            radio_vis = 1.0  # Radio visual predeterminado
             
-        elementos[cuerpo.nombre] = {
-            'esfera': None,  # Se inicializará en cada frame
-            'linea': ax.plot([], [], [], '-', color=color, alpha=0.7)[0],
-            'color': color,
-            'radio': radio_vis
+        elementos[cuerpo.nombre] = {  # Almacena elementos de visualización para cada cuerpo
+            'esfera': None,  # Placeholder para la esfera (se inicializará en cada frame)
+            'linea': ax.plot([], [], [], '-', color=color, alpha=0.7)[0],  # Línea para la trayectoria
+            'color': color,  # Color asignado
+            'radio': radio_vis  # Radio visual
         }
     
     # Configurar leyenda personalizada
-    from matplotlib.lines import Line2D
+    from matplotlib.lines import Line2D  # Importa Line2D para crear elementos de leyenda personalizados
     leyenda_elementos = [Line2D([0], [0], marker='o', color='w', markerfacecolor=elementos[cuerpo.nombre]['color'],
-                               markersize=10, label=cuerpo.nombre) for cuerpo in cuerpos]
-    ax.legend(handles=leyenda_elementos, loc='upper right')
+                               markersize=10, label=cuerpo.nombre) for cuerpo in cuerpos]  # Crea elementos de leyenda
+    ax.legend(handles=leyenda_elementos, loc='upper right')  # Añade leyenda en esquina superior derecha
     
-    plt.tight_layout()
+    plt.tight_layout()  # Ajusta automáticamente los elementos para optimizar espacio
     
     # Configurar animación manual
-    if pasos_animacion is None:
-        pasos_animacion = len(cuerpos[0].historial_posiciones)
+    if pasos_animacion is None:  # Si no se especifica número de pasos
+        pasos_animacion = len(cuerpos[0].historial_posiciones)  # Usa todos los pasos disponibles
     
-    pasos_animacion = min(pasos_animacion, len(cuerpos[0].historial_posiciones))
+    pasos_animacion = min(pasos_animacion, len(cuerpos[0].historial_posiciones))  # Limita a los pasos disponibles
     
-    print("Animación iniciada. Puedes rotar la figura con el mouse mientras se actualiza.")
-    print(f"Mostrando {pasos_animacion} pasos de simulación.")
+    print("Animación iniciada. Puedes rotar la figura con el mouse mientras se actualiza.")  # Mensaje informativo
+    print(f"Mostrando {pasos_animacion} pasos de simulación.")  # Mensaje informativo
     
     # Función para crear esferas 3D
-    def crear_esfera(centro, radio, color):
-        u = np.linspace(0, 2 * np.pi, 10)
-        v = np.linspace(0, np.pi, 10)
-        x = centro[0] + radio * np.outer(np.cos(u), np.sin(v))
-        y = centro[1] + radio * np.outer(np.sin(u), np.sin(v))
-        z = centro[2] + radio * np.outer(np.ones(np.size(u)), np.cos(v))
-        return ax.plot_surface(x, y, z, color=color, alpha=1)
+    def crear_esfera(centro, radio, color):  # Función que crea una esfera 3D
+        u = np.linspace(0, 2 * np.pi, 10)  # Vector de ángulos u (longitud)
+        v = np.linspace(0, np.pi, 10)  # Vector de ángulos v (latitud)
+        x = centro[0] + radio * np.outer(np.cos(u), np.sin(v))  # Coordenadas x de la esfera
+        y = centro[1] + radio * np.outer(np.sin(u), np.sin(v))  # Coordenadas y de la esfera
+        z = centro[2] + radio * np.outer(np.ones(np.size(u)), np.cos(v))  # Coordenadas z de la esfera
+        return ax.plot_surface(x, y, z, color=color, alpha=1)  # Devuelve superficie 3D
     
     # Actualizar manualmente frame por frame para permitir interactividad
-    for frame in range(pasos_animacion):
+    for frame in range(pasos_animacion):  # Bucle para cada fotograma
         # Limpiar esferas previas
-        for cuerpo in cuerpos:
-            if elementos[cuerpo.nombre]['esfera'] is not None:
-                elementos[cuerpo.nombre]['esfera'].remove()
+        for cuerpo in cuerpos:  # Recorre todos los cuerpos
+            if elementos[cuerpo.nombre]['esfera'] is not None:  # Si existe una esfera previa
+                elementos[cuerpo.nombre]['esfera'].remove()  # Elimina la esfera anterior
         
         # Calcular el centro del sistema para este frame
-        posiciones_actuales = [cuerpo.historial_posiciones[frame] for cuerpo in cuerpos]
-        centro_sistema = np.mean(posiciones_actuales, axis=0)
+        posiciones_actuales = [cuerpo.historial_posiciones[frame] for cuerpo in cuerpos]  # Lista de posiciones actuales
+        centro_sistema = np.mean(posiciones_actuales, axis=0)  # Centro del sistema como promedio de posiciones
         
         # Establecer nuevos límites para seguir el movimiento del sistema
         # Usar escala dinámica para cubrir todos los cuerpos con margen
-        posiciones_np = np.array(posiciones_actuales)
-        max_dist = np.max(np.linalg.norm(posiciones_np - centro_sistema, axis=1))
+        posiciones_np = np.array(posiciones_actuales)  # Convierte lista a array NumPy
+        max_dist = np.max(np.linalg.norm(posiciones_np - centro_sistema, axis=1))  # Distancia máxima al centro
         margen = max_dist * 1.5  # Factor de margen para la vista
         
         # Actualizar límites de los ejes para seguir el centro del sistema
-        ax.set_xlim(centro_sistema[0] - margen, centro_sistema[0] + margen)
-        ax.set_ylim(centro_sistema[1] - margen, centro_sistema[1] + margen)
-        ax.set_zlim(centro_sistema[2] - margen, centro_sistema[2] + margen)
+        ax.set_xlim(centro_sistema[0] - margen, centro_sistema[0] + margen)  # Actualiza límites eje x
+        ax.set_ylim(centro_sistema[1] - margen, centro_sistema[1] + margen)  # Actualiza límites eje y
+        ax.set_zlim(centro_sistema[2] - margen, centro_sistema[2] + margen)  # Actualiza límites eje z
         
         # Factor de escala para hacer visibles los cuerpos pero manteniendo el tamaño proporcional
-        escala = margen * 0.05
+        escala = margen * 0.05  # Calcula factor de escala para visualización
         
         # Actualizar planetas y trayectorias
-        for cuerpo in cuerpos:
-            historial = cuerpo.historial_posiciones[:frame+10]
-            if not historial:
-                continue
+        for cuerpo in cuerpos:  # Recorre todos los cuerpos
+            historial = cuerpo.historial_posiciones[:frame+10]  # Obtiene historial hasta frame actual +10
+            if not historial:  # Si no hay historial
+                continue  # Salta a la siguiente iteración
                 
-            pos_actual = historial[-1]
+            pos_actual = historial[-1]  # Posición actual del cuerpo
             
             # Crear esfera 3D para representar el cuerpo
-            radio_escalado = elementos[cuerpo.nombre]['radio'] * escala
+            radio_escalado = elementos[cuerpo.nombre]['radio'] * escala  # Escala el radio visual
             elementos[cuerpo.nombre]['esfera'] = crear_esfera(
-                pos_actual, radio_escalado, elementos[cuerpo.nombre]['color']
+                pos_actual, radio_escalado, elementos[cuerpo.nombre]['color']  # Crea esfera en la posición actual
             )
             
             # Actualizar trayectoria
-            x, y, z = zip(*historial)
-            elementos[cuerpo.nombre]['linea'].set_data(x, y)
-            elementos[cuerpo.nombre]['linea'].set_3d_properties(z)
+            x, y, z = zip(*historial)  # Desempaqueta coordenadas para la trayectoria
+            elementos[cuerpo.nombre]['linea'].set_data(x, y)  # Actualiza datos x,y de la línea
+            elementos[cuerpo.nombre]['linea'].set_3d_properties(z)  # Actualiza datos z de la línea
         
         # Mostrar progreso
-        if frame % 10 == 0:
-            print(f"Progreso: {frame}/{pasos_animacion}", end="\r")
+        if frame % 10 == 0:  # Cada 10 frames
+            print(f"Progreso: {frame}/{pasos_animacion}", end="\r")  # Muestra progreso de la animación
         
         # Actualizar canvas y pausar para permitir interactividad
-        fig.canvas.draw()
-        plt.pause(0.0001)  # Ajusta este valor para cambiar la velocidad de la animación
+        fig.canvas.draw()  # Redibuja el canvas
+        plt.pause(0.0001)  # Pausa breve para permitir interactividad y ajustar velocidad de animación
     
-    print("\nAnimación completada. La figura permanece interactiva.")
+    print("\nAnimación completada. La figura permanece interactiva.")  # Mensaje informativo
     plt.ioff()  # Desactivar modo interactivo cuando termina la animación
     plt.show()  # Mantener la ventana abierta para interacción
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # Bloque de ejecución principal
     # Sistema solar simplificado con radios reales (en metros)
     # Los radios son usados solo para visualización y están escalados
-    sol = Estrella("Sol", 1.989e30, radio=6.957e8)
+    sol = Estrella("Sol", 1.989e30, radio=6.957e8)  # Crea objeto Sol (estrella)
     
     # Tierra orbita
     tierra = Planeta(
-        "Tierra", 5.972e24, radio=6.371e6,
-        x=1.496e11, y=0, z=0,
-        vx=0, vy=29.78e3, vz=1.0e3
+        "Tierra", 5.972e24, radio=6.371e6,  # Crea objeto Tierra (planeta)
+        x=1.496e11, y=0, z=0,  # Posición inicial (distancia al Sol)
+        vx=0, vy=29.78e3, vz=1.0e3  # Velocidad inicial (órbita)
     )
     
     # Marte orbita
     marte = Planeta(
-        "Marte", 6.39e23, radio=3.389e6,
-        x=2.279e11, y=0, z=0,
-        vx=0, vy=23.0e3, vz=2.0e3
+        "Marte", 6.39e23, radio=3.389e6,  # Crea objeto Marte (planeta)
+        x=2.279e11, y=0, z=0,  # Posición inicial (distancia al Sol)
+        vx=0, vy=23.0e3, vz=2.0e3  # Velocidad inicial (órbita)
     )
     
     # Vector de traslación global [vx, vy, vz] en m/s
     vector_traslacion = np.array([5.0e3, 8.0e3, 15.0e3])  # 5 km/s en x, 8 km/s en y, 15 km/s en z
     
     # Simulación con paso de tiempo (1 hora) y vector de traslación
-    print("Iniciando simulación...")
-    simular_sistema([sol, tierra, marte], dt=360000, pasos=365*24, vector_traslacion=vector_traslacion)
-    print("Simulación completada. Iniciando visualización...")
+    print("Iniciando simulación...")  # Mensaje informativo
+    simular_sistema([sol, tierra, marte], dt=360000, pasos=365*24, vector_traslacion=vector_traslacion)  # Ejecuta simulación
+    print("Simulación completada. Iniciando visualización...")  # Mensaje informativo
     
     # Visualización interactiva
-    visualizar_sistema_3d([sol, tierra, marte], pasos_animacion=10000)  # Mostrar un año de simulación (365*24)
+    visualizar_sistema_3d([sol, tierra, marte], pasos_animacion=10000)  # Muestra visualización 3D
