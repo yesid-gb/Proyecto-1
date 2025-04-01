@@ -299,9 +299,9 @@ if __name__ == "__main__":  # Bloque de ejecución principal
     vector_traslacion = np.array([5.0e3, 8.0e3, 15.0e3])  # 5 km/s en x, 8 km/s en y, 15 km/s en z
     
     # Simulación con paso de tiempo (1 hora) y vector de traslación
-    print("Iniciando simulación...")  # Mensaje informativo
+    print("Iniciando simulación...")  
     simular_sistema([sol, tierra, marte], dt=360000, pasos=365*24, vector_traslacion=vector_traslacion)  # Ejecuta simulación
-    print("Simulación completada. Iniciando visualización...")  # Mensaje informativo
+    print("Simulación completada. Iniciando visualización...")  
     
     # Visualización interactiva
     visualizar_sistema_3d([sol, tierra, marte], pasos_animacion=10000)  # Muestra visualización 3D
