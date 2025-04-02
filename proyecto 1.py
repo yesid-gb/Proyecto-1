@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod  # Importa clases para crear clases abstractas
-import numpy as np                   # Importa NumPy para cálculos matemáticos y vectoriales
+import math                 # Importa NumPy para cálculos matemáticos y vectoriales
 import matplotlib.pyplot as plt      # Importa Matplotlib para visualización gráfica
-
+import numpy as np
 
 # Clase para cuerpos celestes - Clase base abstracta para todos los cuerpos celestes
 class CuerpoCeleste(ABC):
@@ -34,18 +34,18 @@ class CuerpoCeleste(ABC):
     
     @property
     def posicion(self):              # Getter que devuelve posición como vector 
-        return np.array([self._x, self._y, self._z])
+        return [self._x, self._y, self._z]
     
     @property
     def velocidad(self):             # Getter que devuelve velocidad como vector 
-        return np.array([self._vx, self._vy, self._vz])
+        return [self._vx, self._vy, self._vz]
     
     @property
     def historial_posiciones(self):  # Getter para acceder al historial de posiciones
         return self._historial_posiciones
     
     def agregar_posicion_historial(self):  # Método para guardar la posición actual en el historial
-        self._historial_posiciones.append(self.posicion.copy())
+        self._historial_posiciones.append([self._x, self._y, self._z])
     
     @abstractmethod
     def actualizar_posicion(self, dt, vector_traslacion=None):  # Método abstracto que deben implementar las subclases
@@ -93,15 +93,20 @@ class Estrella(CuerpoCeleste):
 G = 6.67430e-11  # Constante universal de gravitación en m³/(kg·s²)
 
 def calcular_fuerza(c1, c2):  # Función para calcular la fuerza gravitacional entre dos cuerpos
-    r = c2.posicion - c1.posicion  # Vector distancia entre los dos cuerpos
-    distancia = np.linalg.norm(r)  # Magnitud de la distancia (norma euclidiana)
-    
+    rx = c2.posicion[0] - c1.posicion[0]  # Componente x del vector distancia
+    ry = c2.posicion[1] - c1.posicion[1]  # Componente y del vector distancia
+    rz = c2.posicion[2] - c1.posicion[2]  # Componente z del vector distancia
+    distancia = math.sqrt(rx*rx + ry*ry + rz*rz)  # Magnitud de la distancia
+
     if distancia == 0:  # Evita división por cero
-        return np.zeros(3)  # Devuelve vector de fuerza cero
+        return [0, 0, 0]  # Devuelve vector de fuerza cero
     
     # Calcular fuerza gravitacional: F = G * m1 * m2 / r^2
     fuerza_magnitud = G * c1.masa * c2.masa / (distancia**2)  # Magnitud de la fuerza según ley de gravitación
-    fuerza_vector = fuerza_magnitud * r / distancia  # Vector fuerza (dirección del cuerpo 2 al 1)
+    fx = fuerza_magnitud * rx / distancia  # Componente x del vector fuerza
+    fy = fuerza_magnitud * ry / distancia  # Componente y del vector fuerza
+    fz = fuerza_magnitud * rz / distancia  # Componente z del vector fuerza
+    fuerza_vector = [fx, fy, fz]  # Vector fuerza completo  
     
     return fuerza_vector  # Devuelve el vector de fuerza gravitacional
 
@@ -121,7 +126,7 @@ def simular_sistema(cuerpos, dt, pasos, vector_traslacion=None):  # Función pri
     
     # Paso inicial: calcular aceleraciones iniciales para todos los cuerpos
     for cuerpo in cuerpos:  # Recorre todos los cuerpos
-        fuerza_total = np.zeros(3)  # Inicializa vector de fuerza total
+        fuerza_total = [0, 0, 0]  # Inicializa vector de fuerza total
         for otro in cuerpos:  # Recorre todos los otros cuerpos
             if otro != cuerpo:  # Evita calcular fuerza con el mismo cuerpo
                 fuerza_total += calcular_fuerza(cuerpo, otro)  # Suma la fuerza ejercida por el otro cuerpo
@@ -138,10 +143,13 @@ def simular_sistema(cuerpos, dt, pasos, vector_traslacion=None):  # Función pri
         
         # Calcular nuevas aceleraciones para todos los cuerpos
         for cuerpo in cuerpos:  # Recorre todos los cuerpos
-            fuerza_total = np.zeros(3)  # vector de fuerza total
+            fuerza_total = [0, 0, 0]  # vector de fuerza total
             for otro in cuerpos:  # Recorre todos los otros cuerpos
                 if otro != cuerpo:  # Evita calcular fuerza con el mismo cuerpo
-                    fuerza_total += calcular_fuerza(cuerpo, otro)  # Suma la fuerza ejercida por el otro cuerpo
+                    f = calcular_fuerza(cuerpo, otro)  # Calcula la fuerza ejercida por el otro cuerpo
+                    fuerza_total[0] += f[0]  # Suma componente x
+                    fuerza_total[1] += f[1]  # Suma componente y
+                    fuerza_total[2] += f[2]  # Suma componente z  
             
             # Calcular aceleración según la ley de Newton: a = F/m
             cuerpo._ax = fuerza_total[0] / cuerpo.masa  # Actualiza componente x de aceleración
@@ -212,11 +220,11 @@ def visualizar_sistema_3d(cuerpos, pasos_animacion=None):  # Función para visua
     
     # Función para crear esferas 3D
     def crear_esfera(centro, radio, color):  # Función que crea una esfera 3D
-        u = np.linspace(0, 2 * np.pi, 10)  # Vector de ángulos u (longitud)
-        v = np.linspace(0, np.pi, 10)  # Vector de ángulos v (latitud)
-        x = centro[0] + radio * np.outer(np.cos(u), np.sin(v))  # Coordenadas x de la esfera
-        y = centro[1] + radio * np.outer(np.sin(u), np.sin(v))  # Coordenadas y de la esfera
-        z = centro[2] + radio * np.outer(np.ones(np.size(u)), np.cos(v))  # Coordenadas z de la esfera
+        u = np.linspace(0, 2 * np.pi, 20)
+        v = np.linspace(0, np.pi, 20)# Crear matrices para las coordenadas de la esfera
+        x = centro[0] + radio * np.outer(np.cos(u), np.sin(v))
+        y = centro[1] + radio * np.outer(np.sin(u), np.sin(v))
+        z = centro[2] + radio * np.outer(np.ones(np.size(u)), np.cos(v))
         return ax.plot_surface(x, y, z, color=color, alpha=1)  # Devuelve superficie 3D
     
     # Actualizar manualmente frame por frame para permitir interactividad
@@ -228,12 +236,21 @@ def visualizar_sistema_3d(cuerpos, pasos_animacion=None):  # Función para visua
         
         # Calcular el centro del sistema para este frame
         posiciones_actuales = [cuerpo.historial_posiciones[frame] for cuerpo in cuerpos]  # Lista de posiciones actuales
-        centro_sistema = np.mean(posiciones_actuales, axis=0)  # Centro del sistema como promedio de posiciones
+        centro_x = sum(pos[0] for pos in posiciones_actuales) / len(posiciones_actuales)
+        centro_y = sum(pos[1] for pos in posiciones_actuales) / len(posiciones_actuales)
+        centro_z = sum(pos[2] for pos in posiciones_actuales) / len(posiciones_actuales)
+        centro_sistema = [centro_x, centro_y, centro_z]  # Centro del sistema como promedio de posiciones
         
         # Establecer nuevos límites para seguir el movimiento del sistema
         # Usar escala dinámica para cubrir todos los cuerpos con margen
-        posiciones_np = np.array(posiciones_actuales)  # Convierte lista a array NumPy
-        max_dist = np.max(np.linalg.norm(posiciones_np - centro_sistema, axis=1))  # Distancia máxima al centro
+        max_dist = 0
+        for pos in posiciones_actuales:
+            dx = pos[0] - centro_sistema[0]
+            dy = pos[1] - centro_sistema[1]
+            dz = pos[2] - centro_sistema[2]
+            dist = math.sqrt(dx*dx + dy*dy + dz*dz)
+            if dist > max_dist:
+                max_dist = dist
         margen = max_dist * 1.5  # Factor de margen para la vista
         
         # Actualizar límites de los ejes para seguir el centro del sistema
@@ -296,7 +313,7 @@ if __name__ == "__main__":  # Bloque de ejecución principal
     )
     
     # Vector de traslación global [vx, vy, vz] en m/s
-    vector_traslacion = np.array([5.0e3, 8.0e3, 15.0e3])  # 5 km/s en x, 8 km/s en y, 15 km/s en z
+    vector_traslacion = [5.0e3, 8.0e3, 15.0e3]  # 5 km/s en x, 8 km/s en y, 15 km/s en z
     
     # Simulación con paso de tiempo (1 hora) y vector de traslación
     print("Iniciando simulación...")  
